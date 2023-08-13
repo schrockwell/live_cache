@@ -20,6 +20,8 @@ defmodule LiveCache do
 
   Live navigation to the LiveView will always result in a cache miss.
 
+  The caching of LiveComponent assigns is not currently supported.
+
   ## Scoping Cached Values
 
   For assigns that depend on external parameters, the `:scope` option can be used to guarantee
@@ -50,13 +52,14 @@ defmodule LiveCache do
         ]
       end
 
-  In `my_app_web.ex`, add `on_mount LiveCache` to the `live_view` definition.
+  In `my_app_web.ex`, update the `live_view` definition.
 
       defmodule MyAppWeb do
         def live_view do
           quote do
             # [...]
-            on_mount LiveCache
+            import LiveCache
+            on_mount LiveCache.LiveView
           end
         end
       end
@@ -108,13 +111,8 @@ defmodule LiveCache do
   @expire_after Application.compile_env(:live_cache, :expire_after, :timer.seconds(5))
   @enabled @expire_after > 0
 
-  @doc """
-  LiveView `on_mount` callback to integrate with LiveCache.
-
-  This function should not called directly. It is a callback invoked via `Phoenix.LiveView.on_mount/1`
-  """
-  @spec on_mount(:default, map, map, LiveView.Socket.t()) :: {:cont, LiveView.Socket.t()}
-  def on_mount(:default, _params, session, socket) do
+  @doc false
+  def __on_mount__(:default, _params, session, socket) do
     if LiveView.connected?(socket) do
       {:cont, connected_mount(socket, session)}
     else

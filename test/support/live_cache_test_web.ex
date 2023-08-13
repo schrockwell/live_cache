@@ -28,7 +28,7 @@ defmodule LiveCacheTestWeb do
 
       import LiveCache
 
-      on_mount(LiveCache)
+      on_mount(LiveCache.LiveView)
 
       unquote(view_helpers())
     end
