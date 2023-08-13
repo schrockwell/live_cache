@@ -45,3 +45,5 @@ then passed as a connection param when the `LiveSocket` client connects. For enh
 the cached values can also be scoped to the current session with the `LiveCache.PerSession` plug.
 
 See HexDoc for [complete documentation](https://hexdocs.pm/live_cache/) and [installation instructions](https://hexdocs.pm/live_cache/LiveCache.html#module-installation).
+
+LiveView 0.18+ is supported.

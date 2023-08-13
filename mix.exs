@@ -9,6 +9,7 @@ defmodule LiveCache.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       docs: docs(),
+      elixirc_paths: elixirc_paths(Mix.env()),
       package: package(),
       description: description(),
       source_url: "https://github.com/schrockwell/live_cache"
@@ -26,9 +27,18 @@ defmodule LiveCache.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:phoenix_live_view, "~> 0.19.0"},
+      # Prod
+      {:phoenix_live_view, "~> 0.18.0"},
       {:plug, "~> 1.0"},
-      {:ex_doc, "~> 0.30.5", only: :dev}
+
+      # Dev
+      {:ex_doc, "~> 0.30.5", only: :dev},
+      {:mix_test_watch, "~> 1.0", only: [:dev, :test], runtime: false},
+
+      # Test
+      {:floki, ">= 0.30.0", only: :test},
+      {:jason, "~> 1.2", only: :test},
+      {:phoenix_view, "~> 2.0", only: :test}
     ]
   end
 
@@ -48,4 +58,7 @@ defmodule LiveCache.MixProject do
       links: %{"GitHub" => "https://github.com/schrockwell/live_cache"}
     ]
   end
+
+  defp elixirc_paths(:test), do: ["lib", "test/support"]
+  defp elixirc_paths(_), do: ["lib"]
 end

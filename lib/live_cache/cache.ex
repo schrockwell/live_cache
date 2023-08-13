@@ -31,4 +31,9 @@ defmodule LiveCache.Cache do
   def insert(cache_key, scope_key, value) do
     :ets.insert(@table, {cache_key, scope_key, value})
   end
+
+  # Only use this for test setup
+  def __invalidate_all__ do
+    :ets.delete_all_objects(@table)
+  end
 end
