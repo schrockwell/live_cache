@@ -20,6 +20,8 @@ defmodule LiveCache do
 
   Live navigation to the LiveView will always result in a cache miss.
 
+  ## Scoping Cached Values
+
   For assigns that depend on external parameters, the `:scope` option can be used to guarantee
   uniqueness of the stored value.
 
@@ -28,9 +30,15 @@ defmodule LiveCache do
         {:ok, socket}
       end
 
+  ## Implementation Details
+
   The cache is rehydrated by storing a one-time key in a `<meta>` tag in the DOM, which is
   then passed as a connection param when the `LiveSocket` client connects. For enhanced security,
   the cached values can also be scoped to the current session with the `LiveCache.PerSession` plug.
+
+  The cache is stored locally in ETS, and is not distributed. If your production application has
+  multiple nodes running behind a load balancer, the load balancer must be configured with "sticky
+  sessions" so that subsequent requests from the same user are handled by the same node.
 
   ## Installation
 
@@ -56,7 +64,9 @@ defmodule LiveCache do
   In the root template `root.html.heex`, add a meta tag to the `<head>`:
 
   ```html
-  <meta name="live-cache-key" content={@live_cache_key} />
+  <%= if assigns[:live_cache_key] do
+    <meta name="live-cache-key" content={@live_cache_key} />
+  <% end %>
   ```
 
   In `app.js`, modify the `LiveSocket` client constructor to include the value from the meta tag:
@@ -79,7 +89,7 @@ defmodule LiveCache do
           # [...]
           plug LiveCache.PerSession
         end
-
+      end
 
   ## Configuration
 
@@ -99,15 +109,9 @@ defmodule LiveCache do
   @enabled @expire_after > 0
 
   @doc """
-  LiveView on_mount callback to integrate with LiveCache.
+  LiveView `on_mount` callback to integrate with LiveCache.
 
-  ## Options
-
-  None.
-
-  ## Example
-
-      on_mount LiveCache
+  This function should not called directly. It is a callback invoked via `Phoenix.LiveView.on_mount/1`
   """
   @spec on_mount(:default, map, map, LiveView.Socket.t()) :: {:cont, LiveView.Socket.t()}
   def on_mount(:default, _params, session, socket) do
@@ -179,6 +183,12 @@ defmodule LiveCache do
 
   This function is identical to `assign_cached/4`, except it falls back to
   `Phoenix.Component.assign_new/3` on a cache miss.
+
+  In other words, the order of priority for evaluating the assign is:
+
+  1. Try to fetch from the cache.
+  2. Try to fetch from existing assigns.
+  3. Evaluate the anonymous function.
   """
   @spec assign_cached_new(LiveView.Socket.t(), atom, (() -> any), keyword) :: LiveView.Socket.t()
   def assign_cached_new(socket, key, fun, opts \\ []) do

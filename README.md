@@ -44,6 +44,8 @@ The cache is rehydrated by storing a one-time key in a `<meta>` tag in the DOM, 
 then passed as a connection param when the `LiveSocket` client connects. For enhanced security,
 the cached values can also be scoped to the current session with the `LiveCache.PerSession` plug.
 
+The cache is stored locally in ETS, and is not distributed. If your production application has multiple nodes running behind a load balancer, the load balancer must be configured with "sticky sessions" so that subsequent requests from the same user are handled by the same node.
+
 See HexDoc for [complete documentation](https://hexdocs.pm/live_cache/) and [installation instructions](https://hexdocs.pm/live_cache/LiveCache.html#module-installation).
 
 LiveView 0.18+ is supported.
