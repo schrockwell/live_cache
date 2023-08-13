@@ -24,10 +24,7 @@ defmodule LiveCache do
   uniqueness of the stored value.
 
       def mount(%{"id" => id}, _session, socket) do
-        socket = assign_cached(socket, :post, scope: id, fn ->
-          Blog.get_post(id)
-        end)
-
+        socket = assign_cached(socket, :post, fn -> Blog.get_post(id) end, scope: id)
         {:ok, socket}
       end
 
@@ -161,18 +158,20 @@ defmodule LiveCache do
 
       def handle_params(%{"order_by" => _order_by} = params, _uri, socket) do
         # Only cache the orders list for a specific set of query params
-        socket = assign_cached(socket, :orders, scope: params, fn ->
-          Orders.list_orders(params)
-        end)
-
+        socket = assign_cached(socket, :orders, fn -> Orders.list_orders(params) end, scope: params)
         {:noreply, socket}
       end
   """
-  @spec assign_cached(LiveView.Socket.t(), atom, keyword, (() -> any)) :: LiveView.Socket.t()
-  def assign_cached(socket, key, opts \\ [], fun) do
-    do_assign_cached(socket, key, opts, fn socket ->
-      Component.assign(socket, key, fun.())
-    end)
+  @spec assign_cached(LiveView.Socket.t(), atom, (() -> any), keyword) :: LiveView.Socket.t()
+  def assign_cached(socket, key, fun, opts \\ []) do
+    do_assign_cached(
+      socket,
+      key,
+      fn socket ->
+        Component.assign(socket, key, fun.())
+      end,
+      opts
+    )
   end
 
   @doc """
@@ -181,18 +180,23 @@ defmodule LiveCache do
   This function is identical to `assign_cached/4`, except it falls back to
   `Phoenix.Component.assign_new/3` on a cache miss.
   """
-  @spec assign_cached_new(LiveView.Socket.t(), atom, keyword, (() -> any)) :: LiveView.Socket.t()
-  def assign_cached_new(socket, key, opts \\ [], fun) do
-    do_assign_cached(socket, key, opts, fn socket ->
-      Component.assign_new(socket, key, fun)
-    end)
+  @spec assign_cached_new(LiveView.Socket.t(), atom, (() -> any), keyword) :: LiveView.Socket.t()
+  def assign_cached_new(socket, key, fun, opts \\ []) do
+    do_assign_cached(
+      socket,
+      key,
+      fn socket ->
+        Component.assign_new(socket, key, fun)
+      end,
+      opts
+    )
   end
 
   defp scope_key(socket, key, opts) do
     {key, socket.private[:live_cache_session], opts[:scope]}
   end
 
-  defp do_assign_cached(socket, key, opts, fallback) do
+  defp do_assign_cached(socket, key, fallback, opts) do
     # Try to fetch value from cache, falling back to assign_new/3
     socket =
       with {:ok, value} <- fetch_cached_value(socket, key, opts) do

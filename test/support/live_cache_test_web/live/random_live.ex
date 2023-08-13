@@ -2,7 +2,7 @@ defmodule LiveCacheTestWeb.RandomLive do
   use LiveCacheTestWeb, :live_view
 
   def mount(%{"scope" => scope}, _, socket) do
-    socket = assign_cached(socket, :random, [scope: scope], fn -> :rand.uniform() end)
+    socket = assign_cached(socket, :random, fn -> :rand.uniform() end, scope: scope)
     {:ok, socket}
   end
 
