@@ -2,6 +2,11 @@ defmodule LiveCache do
   @moduledoc """
   Briefly cache LiveView assigns to prevent recalculating them during connected mounts.
 
+  For example:
+
+  - Cache a database query to avoid duplicate identical queries, resulting in a faster connected mount
+  - Cache a random value to determine which content to display in an A/B test
+
   By using `assign_cached/4`, an assign evaluated during the disconnected mount
   of a LiveView is temporarily cached in ETS, for retrieval during the connected mount that
   immediately follows.
