@@ -53,7 +53,7 @@ defmodule LiveCache do
 
       def deps do
         [
-          {:live_cache, "~> 0.1.0"}
+          {:live_cache, "~> #{LiveCache.MixProject.project()[:version]}"}
         ]
       end
 
@@ -104,8 +104,8 @@ defmodule LiveCache do
   The default config is below.
 
       config :live_cache,
-        expire_after: :timer.seconds(5) # Cache expiration time, in milliseconds;
-                                        # set to 0 to disable caching
+        ttl: :timer.seconds(5),          # Cache expiration time, in milliseconds; set to 0 to disable caching
+        sweep_every: :timer.seconds(1)   # How frequently the cache is purged
   """
 
   alias Phoenix.Component
@@ -113,8 +113,8 @@ defmodule LiveCache do
 
   alias LiveCache.Cache
 
-  @expire_after Application.compile_env(:live_cache, :expire_after, :timer.seconds(5))
-  @enabled @expire_after > 0
+  @ttl Application.compile_env(:live_cache, :ttl, :timer.seconds(5))
+  @enabled @ttl > 0
 
   @doc false
   def __on_mount__(:default, _params, session, socket) do
@@ -130,7 +130,6 @@ defmodule LiveCache do
     socket
     |> Component.assign(:live_cache_key, Cache.generate_cache_key())
     |> per_session(session)
-    |> invalidate_all_after(@expire_after)
   end
 
   defp connected_mount(socket, session) do
@@ -242,14 +241,6 @@ defmodule LiveCache do
       raise "live_cache_key unavailable - did you remember to add the meta tag and LiveView socket params?"
   end
 
-  defp invalidate_all_after(socket, timeout) do
-    if @enabled do
-      Cache.invalidate_all_after(cache_key!(socket), timeout)
-    end
-
-    socket
-  end
-
   defp retrieve_cached_assigns(socket) do
     cached_assigns =
       if @enabled do
@@ -272,7 +263,7 @@ defmodule LiveCache do
 
   defp cache_it(socket, key, opts) do
     if @enabled do
-      Cache.insert(cache_key!(socket), scope_key(socket, key, opts), socket.assigns[key])
+      Cache.insert(cache_key!(socket), scope_key(socket, key, opts), socket.assigns[key], @ttl)
     end
 
     socket

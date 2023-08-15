@@ -7,7 +7,7 @@ defmodule LiveCacheTest do
   import Phoenix.ConnTest
 
   setup do
-    LiveCache.Cache.__invalidate_all__()
+    LiveCache.Cache.__reset__()
     start_supervised!(@endpoint)
     :ok
   end

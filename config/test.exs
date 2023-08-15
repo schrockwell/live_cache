@@ -1,7 +1,7 @@
 import Config
 
 # Make the expiration faster for testing
-config :live_cache, expire_after: 500
+config :live_cache, ttl: 500, sweep_every: 100
 
 config :phoenix, :json_library, Jason
 
